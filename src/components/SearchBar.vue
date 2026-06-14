@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { IUser } from '@/types';
+import type { IGithubUserResponse, ISuggestions, IUser } from '@/types';
 import { useDebouncedRef } from '@/utils/debouncedRef';
 import { ref, watch } from 'vue';
 
@@ -11,7 +11,7 @@ const emit = defineEmits<{
 const loading = defineProps<{ loading: boolean }>();
 
 const searchInput = useDebouncedRef('');
-const suggestions = ref<IUser[] | []>([]);
+const suggestions = ref<ISuggestions[]>([]);
 
 async function selectUser(username: string) {
 	searchInput.value = '';
@@ -28,9 +28,26 @@ async function loadUserInfo(username: string) {
 		},
 	});
 
-	const data: IUser = await response.json();
+	const data: IGithubUserResponse = await response.json();
 
-	emit('update-user', data);
+	const userData: IUser = {
+		login: data.login,
+		id: data.id,
+		avatarUrl: data.avatar_url,
+		name: data.name,
+		bio: data.bio,
+		location: data.location,
+		profileUrl: data.html_url,
+		followers: data.followers,
+		following: data.following,
+		publicRepos: data.public_repos,
+		publicGists: data.public_gists,
+		hireable: data.hireable,
+		createdAt: data.created_at,
+		updatedAt: data.updated_at,
+	};
+
+	emit('update-user', userData);
 	emit('update-loading', false);
 }
 
@@ -51,7 +68,13 @@ watch(searchInput, async () => {
 
 	const data = await response.json();
 
-	suggestions.value = data.items;
+	suggestions.value = data.items.map((item: ISuggestions) => {
+		return {
+			id: item.id,
+			avatar_url: item.avatar_url,
+			login: item.login,
+		};
+	});
 });
 </script>
 
