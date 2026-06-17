@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { IGithubUserResponse, ISuggestions, IUser } from '@/types';
-import { useDebouncedRef } from '@/utils/debouncedRef';
 import { ref, watch } from 'vue';
 
 const emit = defineEmits<{
@@ -12,8 +11,11 @@ const props = defineProps<{
 	loading: boolean;
 }>();
 
-const searchInput = useDebouncedRef('');
+const searchInput = ref('');
 const suggestions = ref<ISuggestions[]>([]);
+
+let debounceTimeout: number;
+let controller: AbortController | null = null;
 
 async function selectUser(username: string) {
 	searchInput.value = '';
@@ -23,60 +25,82 @@ async function selectUser(username: string) {
 }
 
 async function loadUserInfo(username: string) {
-	emit('update-loading', true);
-	const response = await fetch(`https://api.github.com/users/${username}`, {
-		headers: {
-			accept: 'application/vnd.github+json',
-		},
-	});
+	try {
+		emit('update-loading', true);
 
-	const data: IGithubUserResponse = await response.json();
+		const response = await fetch(`https://api.github.com/users/${username}`, {
+			headers: {
+				accept: 'application/vnd.github+json',
+			},
+		});
 
-	const userData: IUser = {
-		login: data.login,
-		id: data.id,
-		avatarUrl: data.avatar_url,
-		name: data.name,
-		bio: data.bio,
-		location: data.location,
-		profileUrl: data.html_url,
-		followers: data.followers,
-		following: data.following,
-		publicRepos: data.public_repos,
-		publicGists: data.public_gists,
-		hireable: data.hireable,
-		createdAt: data.created_at,
-		updatedAt: data.updated_at,
-	};
+		const data: IGithubUserResponse = await response.json();
 
-	emit('update-user', userData);
-	emit('update-loading', false);
+		const userData: IUser = {
+			login: data.login,
+			id: data.id,
+			avatarUrl: data.avatar_url,
+			name: data.name,
+			bio: data.bio,
+			location: data.location,
+			profileUrl: data.html_url,
+			followers: data.followers,
+			following: data.following,
+			publicRepos: data.public_repos,
+			publicGists: data.public_gists,
+			hireable: data.hireable,
+			createdAt: data.created_at,
+			updatedAt: data.updated_at,
+		};
+
+		emit('update-user', userData);
+	} finally {
+		emit('update-loading', false);
+	}
 }
 
-watch(searchInput, async () => {
-	if (searchInput.value.length < 2) {
+async function fetchSuggestions(query: string) {
+	controller?.abort();
+
+	controller = new AbortController();
+
+	try {
+		const response = await fetch(
+			`https://api.github.com/search/users?q=${encodeURIComponent(query)}&per_page=5`,
+			{
+				signal: controller.signal,
+				headers: {
+					accept: 'application/vnd.github+json',
+				},
+			},
+		);
+
+		const data = await response.json();
+
+		suggestions.value = (data.items ?? []).map((item: ISuggestions) => ({
+			id: item.id,
+			avatar_url: item.avatar_url,
+			login: item.login,
+		}));
+	} catch (error) {
+		if ((error as Error).name !== 'AbortError') {
+			console.error(error);
+		}
+	}
+}
+
+watch(searchInput, value => {
+	clearTimeout(debounceTimeout);
+
+	if (value.length < 2) {
+		controller?.abort();
 		suggestions.value = [];
 		return;
 	}
 
-	const response = await fetch(
-		`https://api.github.com/search/users?q=${searchInput.value}&per_page=5`,
-		{
-			headers: {
-				accept: 'application/vnd.github+json',
-			},
-		},
-	);
-
-	const data = await response.json();
-
-	suggestions.value = data.items.map((item: ISuggestions) => {
-		return {
-			id: item.id,
-			avatar_url: item.avatar_url,
-			login: item.login,
-		};
-	});
+	debounceTimeout = window.setTimeout(() => {
+		fetchSuggestions(value);
+	}, 300);
 });
 </script>
 
@@ -95,7 +119,7 @@ watch(searchInput, async () => {
 				:disabled="props.loading || !searchInput"
 				class="rounded-xl bg-blue-600 px-6 py-3 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
 			>
-				Search
+				{{ props.loading ? 'Loading...' : 'Search' }}
 			</button>
 		</div>
 		<div
