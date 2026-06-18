@@ -1,42 +1,65 @@
-# github-profile-explorer
+# GitHub Profile Explorer
 
-This template should help get you started developing with Vue 3 in Vite.
+A simple GitHub user search application built with Vue 3 and TypeScript. Search for GitHub users, view profile information, and browse suggestions while typing.
 
-## Recommended IDE Setup
+## Features
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+* Search GitHub users by username
+* Suggestions with debounced search
+* User profile overview
+* Display avatar, bio, location, and profile link
+* Display followers and following counts
+* Display public repositories and gists count
+* Light/Dark theme switcher
+* Responsive design
+* Loading states for API requests
 
-## Recommended Browser Setup
+## Built With
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+* Vue 3
+* TypeScript
+* Vite
+* Tailwind CSS
+* GitHub REST API
 
-## Type Support for `.vue` Imports in TS
+## Screenshots
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+<img width="1440" height="783" alt="image" src="https://github.com/user-attachments/assets/48a92334-70da-42aa-928c-82c7a8f0d4f7" />
 
-## Customize configuration
+<img width="1440" height="783" alt="image" src="https://github.com/user-attachments/assets/369740d6-d2e1-4abd-b313-397db46e8422" />
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+## Installation
 
-## Project Setup
+```bash
+git clone https://github.com/your-username/github-profile-explorer.git
 
-```sh
+cd github-profile-explorer
+
 npm install
-```
 
-### Compile and Hot-Reload for Development
-
-```sh
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+## GitHub API Rate Limiting
 
-```sh
-npm run build
-```
+This project uses the public GitHub API without authentication.
+
+GitHub applies strict rate limits to unauthenticated requests. Because the application performs live searches while typing, you may occasionally receive a **403 Forbidden** response after making too many requests in a short period of time.
+
+If this happens:
+
+* Wait a few minutes before searching again
+* Refresh the page if necessary
+* Consider using a GitHub Personal Access Token if extending the project
+
+This is an expected limitation of the public GitHub API and not an application bug.
+
+### Theme Persistence
+
+Users expect their selected theme to persist between sessions.
+
+Stored theme preference in `localStorage` and restored it on application startup.
+
+## License
+
+MIT
